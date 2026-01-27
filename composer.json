@@ -1,0 +1,47 @@
+{
+    "name": "401clicks/laravel-logger",
+    "description": "Laravel logging driver for 401 Clicks - Simple log aggregation and monitoring",
+    "keywords": ["laravel", "logging", "monitoring", "401clicks", "log aggregation"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "401 Clicks",
+            "email": "support@401clicks.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "monolog/monolog": "^3.0",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "pestphp/pest": "^2.0|^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Clicks\\Logger\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Clicks\\Logger\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Clicks\\Logger\\ClicksLoggerServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
