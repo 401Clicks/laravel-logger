@@ -32,6 +32,8 @@ That's it! Your logs will now be sent to 401 Clicks.
 | `CLICKS_LOG_LEVEL` | Minimum log level to send | `debug` |
 | `CLICKS_BATCH_SIZE` | Number of logs to batch | `10` |
 | `CLICKS_FLUSH_INTERVAL` | Max seconds between flushes | `5` |
+| `CLICKS_MASKING_ENABLED` | Enable/disable data masking | `true` |
+| `CLICKS_MASKING_STYLE` | Masking style: `full`, `partial`, or `hash` | `full` |
 
 ### Publishing Config
 
@@ -88,9 +90,86 @@ To only send logs to 401 Clicks:
 LOG_CHANNEL=clicks
 ```
 
+## Sensitive Data Masking
+
+The logger automatically masks sensitive data **before** it leaves your application. This is the most secure approach as PII and credentials never reach any external service.
+
+### Default Behavior
+
+By default, masking is **enabled** and will detect and mask:
+- Credit card numbers (Visa, MasterCard, Amex, Discover, JCB)
+- Social Security Numbers (XXX-XX-XXXX format)
+- API keys (sk_*, pk_*, Bearer tokens)
+- Passwords in key-value contexts
+- Phone numbers (US formats)
+
+### Configuration
+
+Configure masking via environment variables or the config file:
+
+```env
+# Disable masking entirely (not recommended)
+CLICKS_MASKING_ENABLED=false
+
+# Change masking style: full, partial, or hash
+CLICKS_MASKING_STYLE=full
+```
+
+Available masking styles:
+
+| Style | Example Input | Example Output |
+|-------|---------------|----------------|
+| `full` (default) | `4111111111111111` | `[CREDIT_CARD]` |
+| `partial` | `4111111111111111` | `****1111` |
+| `hash` | `4111111111111111` | `[a3f8b2c1]` |
+
+### Custom Patterns
+
+Add custom patterns in your `config/clicks-logger.php`:
+
+```php
+'masking' => [
+    'custom_patterns' => [
+        [
+            'name' => 'Customer IDs',
+            'pattern' => '/CUST-[A-Z0-9]{8}/i',
+            'replacement' => '[CUSTOMER_ID]',
+        ],
+        [
+            'name' => 'Internal Order Numbers',
+            'pattern' => '/ORD-\d{10}/',
+            'replacement' => '[ORDER_ID]',
+        ],
+    ],
+],
+```
+
+### Enabling Additional Patterns
+
+To mask email addresses or IP addresses, update the `patterns` array:
+
+```php
+'masking' => [
+    'patterns' => [
+        'credit_cards',
+        'ssn',
+        'api_keys',
+        'passwords',
+        'phone_numbers',
+        'emails',       // Now enabled
+        'ip_addresses', // Now enabled
+    ],
+],
+```
+
+### Server-Side Fallback
+
+401 Clicks also provides server-side masking for logs sent via cURL or other methods that don't use this package. Configure server-side masking in your project settings at 401clicks.com.
+
 ## How It Works
 
 - Logs are batched (default: 10 logs or 5 seconds)
+- Sensitive data is masked before batching (client-side)
 - Batches are sent via HTTP POST to the 401 Clicks API
 - Failed sends are logged to stderr (won't break your app)
 - Remaining logs are flushed on shutdown

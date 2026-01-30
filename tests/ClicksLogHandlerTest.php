@@ -50,3 +50,32 @@ it('buffers logs before sending', function () {
     // Initially empty
     expect($bufferProperty->getValue($handler))->toBeEmpty();
 });
+
+it('masks sensitive data in formatted records', function () {
+    $handler = new ClicksLogHandler(
+        url: 'https://logs.401clicks.com/api/v1/logs',
+        token: 'test-token',
+        level: Level::Debug,
+    );
+
+    $record = new LogRecord(
+        datetime: new DateTimeImmutable('2024-01-15T12:00:00+00:00'),
+        channel: 'test',
+        level: Level::Info,
+        message: 'Payment processed with card 4111111111111111',
+        context: ['ssn' => '123-45-6789'],
+        extra: [],
+    );
+
+    $reflection = new ReflectionClass($handler);
+    $method = $reflection->getMethod('formatRecord');
+    $method->setAccessible(true);
+
+    $formatted = $method->invoke($handler, $record);
+
+    // Credit card should be masked
+    expect($formatted['message'])->toBe('Payment processed with card [CREDIT_CARD]');
+
+    // SSN should be masked
+    expect($formatted['context']['ssn'])->toBe('[SSN]');
+});

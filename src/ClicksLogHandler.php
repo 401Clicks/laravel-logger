@@ -20,6 +20,8 @@ class ClicksLogHandler extends AbstractProcessingHandler
 
     protected ?float $lastFlush = null;
 
+    protected ?ClientDataMasker $masker = null;
+
     public function __construct(
         protected string $url,
         protected string $token,
@@ -34,6 +36,9 @@ class ClicksLogHandler extends AbstractProcessingHandler
         ]);
 
         $this->lastFlush = microtime(true);
+
+        // Initialize the data masker
+        $this->masker = new ClientDataMasker;
 
         // Register shutdown function to flush remaining logs
         register_shutdown_function([$this, 'flush']);
@@ -54,7 +59,7 @@ class ClicksLogHandler extends AbstractProcessingHandler
 
     protected function formatRecord(LogRecord $record): array
     {
-        return [
+        $formatted = [
             'timestamp' => $record->datetime->format('c'),
             'level' => $record->level->name,
             'message' => $record->message,
@@ -65,6 +70,13 @@ class ClicksLogHandler extends AbstractProcessingHandler
                 'app_name' => config('app.name', 'Laravel'),
             ]),
         ];
+
+        // Apply client-side data masking before sending
+        if ($this->masker && $this->masker->isEnabled()) {
+            $formatted = $this->masker->maskRecord($formatted);
+        }
+
+        return $formatted;
     }
 
     public function flush(): void
