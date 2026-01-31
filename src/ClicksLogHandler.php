@@ -61,10 +61,9 @@ class ClicksLogHandler extends AbstractProcessingHandler
     {
         $formatted = [
             'timestamp' => $record->datetime->format('c'),
-            'level' => $record->level->name,
+            'level' => strtolower($record->level->name),
             'message' => $record->message,
-            'context' => $record->context,
-            'extra' => array_merge($record->extra, [
+            'context' => array_merge($record->context, [
                 'hostname' => gethostname(),
                 'app_env' => config('app.env', 'production'),
                 'app_name' => config('app.name', 'Laravel'),
@@ -90,7 +89,10 @@ class ClicksLogHandler extends AbstractProcessingHandler
         $this->lastFlush = microtime(true);
 
         try {
-            $this->client->post($this->url, [
+            // Use the batch endpoint for multiple logs
+            $batchUrl = rtrim($this->url, '/').'/batch';
+
+            $this->client->post($batchUrl, [
                 'headers' => [
                     'Authorization' => 'Bearer '.$this->token,
                     'Content-Type' => 'application/json',

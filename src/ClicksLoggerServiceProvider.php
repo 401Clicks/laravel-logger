@@ -12,7 +12,7 @@ class ClicksLoggerServiceProvider extends ServiceProvider
 
         // Extend the log manager to add our custom driver
         $this->app->make('log')->extend('clicks', function ($app, array $config) {
-            return new ClicksLogger($config);
+            return (new ClicksLogger($config))($config);
         });
     }
 
