@@ -63,6 +63,7 @@ class ClicksLogHandler extends AbstractProcessingHandler
             'timestamp' => $record->datetime->format('c'),
             'level' => strtolower($record->level->name),
             'message' => $record->message,
+            'source' => gethostname() ?: 'unknown',
             'context' => array_merge($record->context, [
                 'hostname' => gethostname(),
                 'app_env' => config('app.env', 'production'),
